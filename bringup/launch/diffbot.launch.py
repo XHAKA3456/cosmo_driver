@@ -15,7 +15,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
 from launch_ros.actions import Node
@@ -32,9 +32,25 @@ def generate_launch_description():
             description="Start RViz2 automatically with this launch file.",
         )
     )
+    # declared_arguments.append(
+    #     DeclareLaunchArgument(
+    #         "front_port",
+    #         default_value="/dev/ttyV0",
+    #         description="The serial port to use for the front hoverboard",
+    #     )
+    # )
+    # declared_arguments.append(
+    #     DeclareLaunchArgument(
+    #         "rear_port",
+    #         default_value="/dev/ttyV1",
+    #         description="The serial port to use for the rear hoverboard",
+    #     )
+    # )
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
+    # front_port = LaunchConfiguration("front_port")
+    # rear_port = LaunchConfiguration("rear_port")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -55,73 +71,110 @@ def generate_launch_description():
             "hoverboard_controllers.yaml",
         ]
     )
-    rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("hoverboard_driver"), "config", "diffbot.rviz"]
-    )
+    # rviz_config_file = PathJoinSubstitution(
+    #     [FindPackageShare("hoverboard_driver"), "config", "diffbot.rviz"]
+    # )
 
-    control_node = Node(
+    # Front Hoverboard control node
+    front_control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[robot_controllers],
+        parameters=[robot_controllers,
+            # {"serial_port": front_port,}
+        ],
         output="both",
         remappings=[
             ("~/robot_description", "/robot_description"),
-            ("/hoverboard_base_controller/cmd_vel", "/cmd_vel"),
+            ("/front_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Front에 맞게 토픽 매핑
         ],
     )
+
+    # Rear Hoverboard control node
+    rear_control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_controllers,
+            # {"serial_port": rear_port,}
+        ],
+        output="both",
+        remappings=[
+            ("~/robot_description", "/robot_description"),
+            ("/rear_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
+        ],
+    )
+
 
     robot_state_pub_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="both",
         parameters=[robot_description],
-        remappings=[
-            ("/hoverboard_base_controller/cmd_vel", "/cmd_vel"),
-        ],
     )
-    rviz_node = Node(
-       package="rviz2",
-       executable="rviz2",
-       name="rviz2",
-       output="log",
-       arguments=["-d", rviz_config_file],
-       condition=IfCondition(gui),
-    )
+    # rviz_node = Node(
+    #    package="rviz2",
+    #    executable="rviz2",
+    #    name="rviz2",
+    #    output="log",
+    #    arguments=["-d", rviz_config_file],
+    #    condition=IfCondition(gui),
+    # )
 
-    joint_state_broadcaster_spawner = Node(
+    front_joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        arguments=["front_joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
-    robot_controller_spawner = Node(
+    front_robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["hoverboard_base_controller", "--controller-manager", "/controller_manager"],
+        arguments=["front_hoverboard_base_controller", "--controller-manager", "/controller_manager"],
     )
 
+    rear_joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["rear_joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    )
+
+    rear_robot_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["rear_hoverboard_base_controller", "--controller-manager", "/controller_manager"],
+    )
     # Delay rviz start after `joint_state_broadcaster`
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-       event_handler=OnProcessExit(
-           target_action=joint_state_broadcaster_spawner,
-           on_exit=[rviz_node],
-       )
+    # delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    #    event_handler=OnProcessExit(
+    #        target_action=joint_state_broadcaster_spawner,
+    #        on_exit=[rviz_node],
+    #    )
+    # )
+
+    # Front spawner
+    delay_front_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=front_joint_state_broadcaster_spawner,
+            on_exit=[front_robot_controller_spawner],
+        )
     )
 
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    # Rear spawner
+    delay_rear_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[robot_controller_spawner],
+            target_action=rear_joint_state_broadcaster_spawner,
+            on_exit=[rear_robot_controller_spawner],
         )
     )
 
     nodes = [
-        control_node,
+        rear_control_node,
+        front_control_node,
         robot_state_pub_node,
-        joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
-        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        front_joint_state_broadcaster_spawner,
+        rear_joint_state_broadcaster_spawner,
+        # delay_rviz_after_joint_state_broadcaster_spawner,
+        delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
+        delay_rear_controller_spawner_after_joint_state_broadcaster_spawner        
     ]
 
     return LaunchDescription(declared_arguments + nodes)
