@@ -23,28 +23,61 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace hoverboard_driver
 {
 
-  hoverboard_driver_node::hoverboard_driver_node() : Node("hoverboard_driver_node")
+  hoverboard_driver_node::hoverboard_driver_node(std::string _prefix) : Node("hoverboard_driver_node")
   {
     // These publishers are only for debugging purposes
+    std::string vel_pub_left_node_name = _prefix + "hoverboard/left_wheel/velocity";
+    vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(vel_pub_left_node_name, 3);
 
-    vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/velocity", 3);
-    vel_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/velocity", 3);
-    pos_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/position", 3);
-    pos_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/position", 3);
-    cmd_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/cmd", 3);
-    cmd_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/cmd", 3);
-    voltage_pub = this->create_publisher<std_msgs::msg::Float64>("hoverboard/battery_voltage", 3);
-    temp_pub = this->create_publisher<std_msgs::msg::Float64>("hoverboard/temperature", 3);
-    curr_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/dc_current", 3);
-    curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/dc_current", 3);
-    connected_pub = this->create_publisher<std_msgs::msg::Bool>("hoverboard/connected", 3);
+    std::string vel_pub_right_node_name = _prefix + "hoverboard/right_wheel/velocity";
+    vel_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>(vel_pub_right_node_name, 3);
+
+    std::string pos_pub_left_node_name = _prefix + "hoverboard/left_wheel/position";
+    pos_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(pos_pub_left_node_name, 3);
+
+    std::string pos_pub_right_node_name = _prefix + "hoverboard/right_wheel/position";
+    pos_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>(pos_pub_right_node_name, 3);
+
+    std::string cmd_pub_left_node_name = _prefix + "hoverboard/left_wheel/cmd";
+    cmd_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(cmd_pub_left_node_name, 3);
+
+    std::string cmd_pub_right_node_name = _prefix + "hoverboard/right_wheel/cmd";
+    cmd_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>(cmd_pub_right_node_name, 3);
+
+    std::string voltage_pub_node_name = _prefix + "hoverboard/battery_voltage";
+    voltage_pub = this->create_publisher<std_msgs::msg::Float64>(voltage_pub_node_name, 3);
+
+    std::string temp_pub_node_name = _prefix + "hoverboard/temperature";
+    temp_pub = this->create_publisher<std_msgs::msg::Float64>(temp_pub_node_name, 3);
+
+    std::string curr_pub_left_node_name = _prefix + "hoverboard/left_wheel/dc_current";
+    curr_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(curr_pub_left_node_name, 3);
+
+    std::string curr_pub_right_node_name = _prefix + "hoverboard/right_wheel/dc_current";
+    curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>(curr_pub_right_node_name, 3);
+
+    std::string connected_pub_node_name = _prefix + "hoverboard/connected";
+    connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
+
+    // // std::string vel_pub_right_node_name = _prefix + "hoverboard/left_wheel/velocity";
+    // // vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(vel_pub_right_node_name, 3);
+    // vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/velocity", 3);
+    // vel_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/velocity", 3);
+    // pos_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/position", 3);
+    // pos_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/position", 3);
+    // cmd_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/cmd", 3);
+    // cmd_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/cmd", 3);
+    // voltage_pub = this->create_publisher<std_msgs::msg::Float64>("hoverboard/battery_voltage", 3);
+    // temp_pub = this->create_publisher<std_msgs::msg::Float64>("hoverboard/temperature", 3);
+    // curr_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/dc_current", 3);
+    // curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/dc_current", 3);
+    // connected_pub = this->create_publisher<std_msgs::msg::Bool>("hoverboard/connected", 3);
 
     declare_parameter("f", 10.2);
     declare_parameter("p", 1.0);
@@ -179,6 +212,8 @@ namespace hoverboard_driver
     wheel_radius = std::stod(info_.hardware_parameters["wheel_radius"]);
     max_velocity = std::stod(info_.hardware_parameters["max_velocity"]);
     port = info_.hardware_parameters["device"];
+    prefix= info_.hardware_parameters["prefix"];
+
     hw_positions_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_velocities_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
@@ -232,7 +267,7 @@ namespace hoverboard_driver
       }
     }
 
-    hardware_publisher = std::make_shared<hoverboard_driver_node>(); // fire up the publisher node
+    hardware_publisher = std::make_shared<hoverboard_driver_node>(prefix); // fire up the publisher node
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -347,7 +382,7 @@ namespace hoverboard_driver
         last_read = time;
 
       if (r < 0 && errno != EAGAIN)
-        RCLCPP_ERROR(rclcpp::get_logger("hoverboard_driver"), "Reading from serial %s failed: %d", port.c_str(), r);
+        RCLCPP_ERROR(rclcpp::get_logger("hoverboard_driver"),"Reading from serial %s failed: %d", port.c_str(), r);
     }
 
     if ((time - last_read).seconds() > 1)
@@ -418,7 +453,7 @@ namespace hoverboard_driver
       }
       else
       {
-        RCLCPP_WARN(rclcpp::get_logger("hoverboard_driver"), "Hoverboard checksum mismatch: %d vs %d", msg.checksum, checksum);
+        RCLCPP_WARN(rclcpp::get_logger("hoverboard_driver"), "%s Hoverboard checksum mismatch: %d vs %d",prefix.c_str(), msg.checksum, checksum);
       }
       msg_len = 0;
     }
@@ -468,7 +503,7 @@ namespace hoverboard_driver
 
     // Print to terminal for debugging
     RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                "Steer: %d, Speed: %d", (int16_t)steer, (int16_t)speed);
+                "%s Steer: %d, Speed: %d",prefix.c_str(), (int16_t)steer, (int16_t)speed);
 
     SerialCommand command;
     command.start = (uint16_t)START_FRAME;
@@ -479,7 +514,7 @@ namespace hoverboard_driver
     int rc = ::write(port_fd, (const void *)&command, sizeof(command));
     if (rc < 0)
     {
-      RCLCPP_ERROR(rclcpp::get_logger("hoverboard_driver"), "Error writing to hoverboard serial port");
+      RCLCPP_ERROR(rclcpp::get_logger("hoverboard_driver"), "%s Error writing to hoverboard serial port", prefix.c_str());
     }
     return hardware_interface::return_type::OK;
   }

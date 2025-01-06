@@ -53,7 +53,7 @@ namespace hoverboard_driver
   class hoverboard_driver_node : public rclcpp::Node
   {
   public:
-    hoverboard_driver_node();
+    hoverboard_driver_node(std::string _prefix);
     /// @brief publish velocity data for debugging
     /// @param wheel left or right wheel
     /// @param message value to publish
@@ -94,6 +94,7 @@ namespace hoverboard_driver
         const std::vector<rclcpp::Parameter> &parameters);
 
     /// @brief PID configuration structure
+
     struct
     {
       double p;
@@ -159,6 +160,7 @@ namespace hoverboard_driver
     double max_velocity = 0.0;
     int direction_correction = 1;
     std::string port;
+    std::string prefix;
 
     rclcpp::Time last_read;
     bool first_read_pass_;
