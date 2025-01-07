@@ -13,8 +13,8 @@
 
   <xacro:diffbot prefix="$(arg prefix)" />
 
-  <xacro:hoverboard_driver_ros2_control name="front_hoverboard" prefix="front_" device="/dev/ttyUSB0"/>
-  <xacro:hoverboard_driver_ros2_control name="rear_hoverboard" prefix="rear_" device="/dev/ttyUSB1"/>
+  <xacro:hoverboard_driver_ros2_control name="front_hoverboard" prefix="front_" device="/dev/ttyV0"/>
+  <xacro:hoverboard_driver_ros2_control name="rear_hoverboard" prefix="rear_" device="/dev/ttyV1"/>
 
 
 </robot>

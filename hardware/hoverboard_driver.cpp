@@ -275,6 +275,7 @@ namespace hoverboard_driver
   std::vector<hardware_interface::StateInterface> hoverboard_driver::export_state_interfaces()
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
+    // RCLCPP_INFO(rclcpp::get_logger("HoverBoardSystemHardware"), " ---------------------------------- joints size %d ",info_.joints.size());
     for (auto i = 0u; i < info_.joints.size(); i++)
     {
       state_interfaces.emplace_back(hardware_interface::StateInterface(
@@ -485,7 +486,7 @@ namespace hoverboard_driver
     // calculate PID values
     double pid_outputs[2];
     pid_outputs[0] = pids[0](hw_velocities_[left_wheel], hw_commands_[left_wheel], period);
-    pid_outputs[1] = pids[1](hw_velocities_[left_wheel], hw_commands_[right_wheel], period);
+    pid_outputs[1] = pids[1](hw_velocities_[right_wheel], hw_commands_[right_wheel], period);
 
     // Convert PID outputs in RAD/S to RPM
     //double set_speed[2] = {
