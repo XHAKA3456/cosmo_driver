@@ -76,21 +76,34 @@ def generate_launch_description():
     # )
 
     # Front Hoverboard control node
-    front_control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_controllers,
-            # {"serial_port": front_port,}
-        ],
-        output="both",
-        remappings=[
-            ("~/robot_description", "/robot_description"),
-            ("/front_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Front에 맞게 토픽 매핑
-        ],
-    )
+    # front_control_node = Node(
+    #     package="controller_manager",
+    #     executable="ros2_control_node",
+    #     parameters=[robot_controllers,
+    #         # {"serial_port": front_port,}
+    #     ],
+    #     output="both",
+    #     remappings=[
+    #         ("~/robot_description", "/robot_description"),
+    #         ("/front_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Front에 맞게 토픽 매핑
+    #     ],
+    # )
 
-    # Rear Hoverboard control node
-    rear_control_node = Node(
+    # # Rear Hoverboard control node
+    # rear_control_node = Node(
+    #     package="controller_manager",
+    #     executable="ros2_control_node",
+    #     parameters=[robot_controllers,
+    #         # {"serial_port": rear_port,}
+    #     ],
+    #     output="both",
+    #     remappings=[
+    #         ("~/robot_description", "/robot_description"),
+    #         ("/rear_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
+    #     ],
+    # )
+
+    control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[robot_controllers,
@@ -100,6 +113,7 @@ def generate_launch_description():
         remappings=[
             ("~/robot_description", "/robot_description"),
             ("/rear_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
+            ("/front_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Front에 맞게 토픽 매핑
         ],
     )
 
@@ -167,8 +181,9 @@ def generate_launch_description():
     )
 
     nodes = [
-        rear_control_node,
-        front_control_node,
+        # rear_control_node,
+        # front_control_node,
+        control_node,
         robot_state_pub_node,
         front_joint_state_broadcaster_spawner,
         rear_joint_state_broadcaster_spawner,
