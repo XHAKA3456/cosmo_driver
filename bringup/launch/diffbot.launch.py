@@ -112,8 +112,8 @@ def generate_launch_description():
         output="both",
         remappings=[
             ("~/robot_description", "/robot_description"),
-            ("/rear_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
-            ("/front_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Front에 맞게 토픽 매핑
+            ("/rear_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
+            ("/front_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Front에 맞게 토픽 매핑
         ],
     )
 
