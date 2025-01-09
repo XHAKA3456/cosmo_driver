@@ -9,9 +9,13 @@ Set the serial port according to your setup in hoverboard_driver.ros2_control.xa
 
 # Launch
 ```
-ros2 launch hoverboard_driver diffbot.launch.py
-```
+ros2 launch hoverboard_driver diffbot.launch.py remap_odometry_tf:=true
 
+```
+# **publish joint_state after rviz is opened**
+'''
+ros2 run joint_state_publisher joint_state_publisher
+'''
 # Classes
 The entire package consists of three main classes:
 1. hoverboard_driver_node
