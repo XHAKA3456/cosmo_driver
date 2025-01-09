@@ -79,9 +79,9 @@ namespace hoverboard_driver
     // curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/dc_current", 3);
     // connected_pub = this->create_publisher<std_msgs::msg::Bool>("hoverboard/connected", 3);
 
-    declare_parameter("f", 10.2);
+    declare_parameter("f", 3.2);
     declare_parameter("p", 1.0);
-    declare_parameter("i", 0.1);
+    declare_parameter("i", 0.05);
     declare_parameter("d", 1.0);
     declare_parameter("i_clamp_min", -10.0);
     declare_parameter("i_clamp_max", 10.0);
@@ -489,9 +489,9 @@ namespace hoverboard_driver
     pid_outputs[1] = pids[1](hw_velocities_[right_wheel], hw_commands_[right_wheel], period);
 
     // Convert PID outputs in RAD/S to RPM
-    //double set_speed[2] = {
-     //   pid_outputs[0] / 0.10472,
-      //  pid_outputs[1] / 0.10472};
+    // double set_speed[2] = {
+    //    pid_outputs[0] / 0.10472,
+    //    pid_outputs[1] / 0.10472};
 
      double set_speed[2] = {
            hw_commands_[left_wheel] / 0.10472,
@@ -499,8 +499,8 @@ namespace hoverboard_driver
      };
 
     // Calculate steering from difference of left and right
-    const double speed = (set_speed[0] + set_speed[1]) / 2.0;
-    const double steer = (set_speed[0] - speed) * 2.0;
+    const double speed = (set_speed[0] + set_speed[1]) / 1.5;
+    const double steer = (set_speed[0] - speed) * 9.0;
 
     // Print to terminal for debugging
     RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),

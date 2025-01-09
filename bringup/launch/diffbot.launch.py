@@ -13,8 +13,8 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
-from launch.conditions import IfCondition
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, TimerAction
+from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
@@ -32,6 +32,13 @@ def generate_launch_description():
             description="Start RViz2 automatically with this launch file.",
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "remap_odometry_tf",
+            default_value="false",
+            description="Remap odometry TF from the steering controller to the TF tree.",
+        )
+    )    
     # declared_arguments.append(
     #     DeclareLaunchArgument(
     #         "front_port",
@@ -49,6 +56,7 @@ def generate_launch_description():
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
+    remap_odometry_tf = LaunchConfiguration("remap_odometry_tf")
     # front_port = LaunchConfiguration("front_port")
     # rear_port = LaunchConfiguration("rear_port")
 
@@ -71,39 +79,11 @@ def generate_launch_description():
             "hoverboard_controllers.yaml",
         ]
     )
-    # rviz_config_file = PathJoinSubstitution(
-    #     [FindPackageShare("hoverboard_driver"), "config", "diffbot.rviz"]
-    # )
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("hoverboard_driver"), "config", "diffbot.rviz"]
+    )
 
-    # Front Hoverboard control node
-    # front_control_node = Node(
-    #     package="controller_manager",
-    #     executable="ros2_control_node",
-    #     parameters=[robot_controllers,
-    #         # {"serial_port": front_port,}
-    #     ],
-    #     output="both",
-    #     remappings=[
-    #         ("~/robot_description", "/robot_description"),
-    #         ("/front_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Front에 맞게 토픽 매핑
-    #     ],
-    # )
-
-    # # Rear Hoverboard control node
-    # rear_control_node = Node(
-    #     package="controller_manager",
-    #     executable="ros2_control_node",
-    #     parameters=[robot_controllers,
-    #         # {"serial_port": rear_port,}
-    #     ],
-    #     output="both",
-    #     remappings=[
-    #         ("~/robot_description", "/robot_description"),
-    #         ("/rear_hoverboard_base_controller/cmd_vel", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
-    #     ],
-    # )
-
-    control_node = Node(
+    control_node_remapped = Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[robot_controllers,
@@ -115,8 +95,36 @@ def generate_launch_description():
             ("/rear_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
             ("/front_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Front에 맞게 토픽 매핑
         ],
+        condition=IfCondition(remap_odometry_tf),
+
+    )
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_controllers],
+        output="both",
+        remappings=[
+            ("~/robot_description", "/robot_description"),
+        ],
+        condition=UnlessCondition(remap_odometry_tf),
     )
 
+    joint_state_publisher = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        output='screen'
+    )
+
+    lidar_node = Node(
+        package="lds01",
+        executable="lds01",
+        output="screen",
+        # parameters=[],
+        # remappings=[
+        #     ("/example_input", "/remapped_input"),  # 토픽 매핑 (필요 시)
+        #     ("/example_output", "/remapped_output"),
+        # ],
+    )
 
     robot_state_pub_node = Node(
         package="robot_state_publisher",
@@ -124,14 +132,14 @@ def generate_launch_description():
         output="both",
         parameters=[robot_description],
     )
-    # rviz_node = Node(
-    #    package="rviz2",
-    #    executable="rviz2",
-    #    name="rviz2",
-    #    output="log",
-    #    arguments=["-d", rviz_config_file],
-    #    condition=IfCondition(gui),
-    # )
+    rviz_node = Node(
+       package="rviz2",
+       executable="rviz2",
+       name="rviz2",
+       output="log",
+       arguments=["-d", rviz_config_file],
+       condition=IfCondition(gui),
+    )
 
     front_joint_state_broadcaster_spawner = Node(
         package="controller_manager",
@@ -157,12 +165,17 @@ def generate_launch_description():
         arguments=["rear_hoverboard_base_controller", "--controller-manager", "/controller_manager"],
     )
     # Delay rviz start after `joint_state_broadcaster`
-    # delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-    #    event_handler=OnProcessExit(
-    #        target_action=joint_state_broadcaster_spawner,
-    #        on_exit=[rviz_node],
-    #    )
-    # )
+    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+       event_handler=OnProcessExit(
+           target_action=front_joint_state_broadcaster_spawner,
+           on_exit=[rviz_node],
+       )
+    )
+
+    delay_joint_state_publisher_after_all_nodes = TimerAction(
+        period=4.0,  
+        actions=[joint_state_publisher]
+    )
 
     # Front spawner
     delay_front_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -183,13 +196,17 @@ def generate_launch_description():
     nodes = [
         # rear_control_node,
         # front_control_node,
+        # joint_state_publisher,
+        control_node_remapped,
         control_node,
         robot_state_pub_node,
         front_joint_state_broadcaster_spawner,
         rear_joint_state_broadcaster_spawner,
-        # delay_rviz_after_joint_state_broadcaster_spawner,
+        delay_rviz_after_joint_state_broadcaster_spawner,
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
-        delay_rear_controller_spawner_after_joint_state_broadcaster_spawner        
+        delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
+        # delay_joint_state_publisher_after_all_nodes,
+        # lidar_node        
     ]
 
     return LaunchDescription(declared_arguments + nodes)
