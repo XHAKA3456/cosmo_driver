@@ -499,8 +499,8 @@ namespace hoverboard_driver
      };
 
     // Calculate steering from difference of left and right
-    const double speed = (set_speed[0] + set_speed[1]) / 1.5;
-    const double steer = (set_speed[0] - speed) * 9.0;
+    const double speed = (set_speed[0] + set_speed[1]) / 2.0;
+    const double steer = (set_speed[0] - speed) * 2.0;
 
     // Print to terminal for debugging
     RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),

@@ -7,8 +7,8 @@
       <hardware>
         <plugin>hoverboard_driver/hoverboard_driver</plugin>
         <param name="prefix">${prefix}</param>
-        <param name="wheel_radius">0.0825</param>
-        <param name="max_velocity">1.0</param>
+        <param name="wheel_radius">0.085</param>
+        <param name="max_velocity">2.0</param>
         <param name="device">${device}</param>
       </hardware>
       <joint name="${prefix}left_wheel_joint">

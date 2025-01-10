@@ -80,7 +80,7 @@ def generate_launch_description():
         ]
     )
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("hoverboard_driver"), "config", "diffbot.rviz"]
+        [FindPackageShare("hoverboard_driver"), "config", "slam.rviz"]
     )
 
     control_node_remapped = Node(
