@@ -65,8 +65,8 @@ namespace hoverboard_driver
     std::string connected_pub_node_name = _prefix + "hoverboard/connected";
     connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
 
-    // // std::string vel_pub_right_node_name = _prefix + "hoverboard/left_wheel/velocity";
-    // // vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(vel_pub_right_node_name, 3);
+    // std::string vel_pub_right_node_name = _prefix + "hoverboard/left_wheel/velocity";
+    // vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(vel_pub_right_node_name, 3);
     // vel_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/velocity", 3);
     // vel_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/velocity", 3);
     // pos_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/left_wheel/position", 3);
@@ -79,7 +79,7 @@ namespace hoverboard_driver
     // curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/dc_current", 3);
     // connected_pub = this->create_publisher<std_msgs::msg::Bool>("hoverboard/connected", 3);
 
-    declare_parameter("f", 3.2);
+    declare_parameter("f",3.2);
     declare_parameter("p", 1.0);
     declare_parameter("i", 0.05);
     declare_parameter("d", 1.0);
@@ -375,10 +375,12 @@ namespace hoverboard_driver
     {
       unsigned char c;
       int i = 0, r = 0;
-
+      RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+                  "%s connect read ",prefix.c_str());
       while ((r = ::read(port_fd, &c, 1)) > 0 && i++ < 1024)
         protocol_recv(time, c);
-
+        RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+                  "%s protocol recv ",prefix.c_str());
       if (i > 0)
         last_read = time;
 
@@ -437,6 +439,11 @@ namespace hoverboard_driver
 
       if (msg.start == START_FRAME && msg.checksum == checksum)
       {
+        RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+                    "Encoder values - Left: %d, Right: %d",
+                    msg.wheelL_cnt, msg.wheelR_cnt);
+
+
         hardware_publisher->publish_voltage((double)msg.batVoltage / 100.0);
         hardware_publisher->publish_temp((double)msg.boardTemp / 10.0);
         ;
@@ -489,28 +496,32 @@ namespace hoverboard_driver
     pid_outputs[1] = pids[1](hw_velocities_[right_wheel], hw_commands_[right_wheel], period);
 
     // Convert PID outputs in RAD/S to RPM
-    // double set_speed[2] = {
-    //    pid_outputs[0] / 0.10472,
-    //    pid_outputs[1] / 0.10472};
+    double set_speed[2] = {
+       pid_outputs[0] / 0.10472,
+       pid_outputs[1] / 0.10472};
 
-     double set_speed[2] = {
-           hw_commands_[left_wheel] / 0.10472,
-           hw_commands_[right_wheel] / 0.10472
-     };
+    //  double set_speed[2] = {
+    //        hw_commands_[left_wheel] / 0.10472,
+    //        hw_commands_[right_wheel] / 0.10472
+    //  };
 
     // Calculate steering from difference of left and right
     const double speed = (set_speed[0] + set_speed[1]) / 2.0;
-    const double steer = (set_speed[0] - speed) * 2.0;
+    const double steer = (set_speed[0] - speed) * 4.5;
 
     // Print to terminal for debugging
-    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                "%s Steer: %d, Speed: %d",prefix.c_str(), (int16_t)steer, (int16_t)speed);
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //             "%s Steer: %d, Speed: %d",prefix.c_str(), (int16_t)steer, (int16_t)speed);
 
     SerialCommand command;
     command.start = (uint16_t)START_FRAME;
     command.steer = (int16_t)steer;
     command.speed = (int16_t)speed;
     command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
+
+    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+                "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,command.speed);
+
 
     int rc = ::write(port_fd, (const void *)&command, sizeof(command));
     if (rc < 0)
