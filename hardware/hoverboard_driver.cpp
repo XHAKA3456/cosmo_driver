@@ -56,12 +56,6 @@ namespace hoverboard_driver
     std::string temp_pub_node_name = _prefix + "hoverboard/temperature";
     temp_pub = this->create_publisher<std_msgs::msg::Float64>(temp_pub_node_name, 3);
 
-    std::string curr_pub_left_node_name = _prefix + "hoverboard/left_wheel/dc_current";
-    curr_pub[left_wheel] = this->create_publisher<std_msgs::msg::Float64>(curr_pub_left_node_name, 3);
-
-    std::string curr_pub_right_node_name = _prefix + "hoverboard/right_wheel/dc_current";
-    curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>(curr_pub_right_node_name, 3);
-
     std::string connected_pub_node_name = _prefix + "hoverboard/connected";
     connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
 
@@ -79,10 +73,10 @@ namespace hoverboard_driver
     // curr_pub[right_wheel] = this->create_publisher<std_msgs::msg::Float64>("hoverboard/right_wheel/dc_current", 3);
     // connected_pub = this->create_publisher<std_msgs::msg::Bool>("hoverboard/connected", 3);
 
-    declare_parameter("f",3.2);
+    declare_parameter("f",1.0);
     declare_parameter("p", 1.0);
     declare_parameter("i", 0.05);
-    declare_parameter("d", 1.0);
+    declare_parameter("d", 8.0);
     declare_parameter("i_clamp_min", -10.0);
     declare_parameter("i_clamp_max", 10.0);
     declare_parameter("antiwindup", false);
@@ -379,8 +373,6 @@ namespace hoverboard_driver
                   "%s connect read ",prefix.c_str());
       while ((r = ::read(port_fd, &c, 1)) > 0 && i++ < 1024)
         protocol_recv(time, c);
-        RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                  "%s protocol recv ",prefix.c_str());
       if (i > 0)
         last_read = time;
 
@@ -405,8 +397,10 @@ namespace hoverboard_driver
 
   void hoverboard_driver::protocol_recv(const rclcpp::Time &time, char byte)
   {
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //           "%s byte: %d",prefix.c_str(),byte);      
     start_frame = ((uint16_t)(byte) << 8) | (uint8_t)prev_byte;
-
+           
     // Read the start frame
     if (start_frame == START_FRAME)
     {
@@ -421,42 +415,37 @@ namespace hoverboard_driver
       *p++ = byte;
       msg_len++;
     }
-
-    if (msg_len == sizeof(SerialFeedback))
+    if (msg_len == 18)
     {
+
       uint16_t checksum = (uint16_t)(msg.start ^
                                      msg.cmd1 ^
                                      msg.cmd2 ^
-                                     msg.speedR_meas ^
-                                     msg.speedL_meas ^
+                                     msg.batVoltage ^
+                                     msg.cmdLed ^
                                      msg.wheelR_cnt ^
                                      msg.wheelL_cnt ^
-                                     msg.left_dc_curr ^
-                                     msg.right_dc_curr ^
-                                     msg.batVoltage ^
-                                     msg.boardTemp ^
-                                     msg.cmdLed);
+                                     msg.boardTemp 
+                                     );
+
+      // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+      //               "%s start: 0X%04X, cmd1: 0X%04X, cmd2: 0X%04X, voltage: 0X%04X, cmdLed: 0X%04X, wheelR: 0X%04X, wheelL: 0X%04X, Temp: 0X%04X",
+      //               prefix.c_str(),msg.start,msg.cmd1,msg.cmd2,msg.batVoltage,msg.cmdLed,msg.wheelR_cnt,msg.wheelL_cnt, msg.boardTemp);
 
       if (msg.start == START_FRAME && msg.checksum == checksum)
       {
-        RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                    "Encoder values - Left: %d, Right: %d",
-                    msg.wheelL_cnt, msg.wheelR_cnt);
-
-
-        hardware_publisher->publish_voltage((double)msg.batVoltage / 100.0);
+        // hardware_publisher->publish_voltage((double)msg.batVoltage / 100.0);
         hardware_publisher->publish_temp((double)msg.boardTemp / 10.0);
-        ;
-        hardware_publisher->publish_curr(left_wheel, (double)msg.left_dc_curr / 100.0);
-        hardware_publisher->publish_curr(right_wheel, (double)msg.right_dc_curr / 100.0);
 
         // Convert RPM to RAD/S
-        hw_velocities_[left_wheel] = direction_correction * (abs(msg.speedL_meas) * 0.10472);
-        hw_velocities_[right_wheel] = direction_correction * (abs(msg.speedR_meas) * 0.10472);
+        // hw_velocities_[left_wheel] = direction_correction * (abs(msg.speedL_meas) * 0.10472);
+        // hw_velocities_[right_wheel] = direction_correction * (abs(msg.speedR_meas) * 0.10472);
         hardware_publisher->publish_vel(left_wheel, hw_velocities_[left_wheel]);
         hardware_publisher->publish_vel(right_wheel, hw_velocities_[right_wheel]);
 
         // Process encoder values and update odometry
+        // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+        //           "%s wheelR_cnt: %d, wheelL_cnt : %d ",prefix.c_str(),msg.wheelR_cnt,msg.wheelL_cnt);        
         on_encoder_update(time, msg.wheelR_cnt, msg.wheelL_cnt);
       }
       else
@@ -493,25 +482,21 @@ namespace hoverboard_driver
     // calculate PID values
     double pid_outputs[2];
     pid_outputs[0] = pids[0](hw_velocities_[left_wheel], hw_commands_[left_wheel], period);
-    pid_outputs[1] = pids[1](hw_velocities_[right_wheel], hw_commands_[right_wheel], period);
+    pid_outputs[1] = pids[1](hw_velocities_[left_wheel], hw_commands_[right_wheel], period);
 
-    // Convert PID outputs in RAD/S to RPM
-    double set_speed[2] = {
-       pid_outputs[0] / 0.10472,
-       pid_outputs[1] / 0.10472};
+    // // Convert PID outputs in RAD/S to RPM
+    // double set_speed[2] = {
+    //    pid_outputs[0] / 0.10472,
+    //    pid_outputs[1] / 0.10472};
 
-    //  double set_speed[2] = {
-    //        hw_commands_[left_wheel] / 0.10472,
-    //        hw_commands_[right_wheel] / 0.10472
-    //  };
+     double set_speed[2] = {
+           hw_commands_[left_wheel] / 0.10472,
+           hw_commands_[right_wheel] / 0.10472
+     };
 
     // Calculate steering from difference of left and right
     const double speed = (set_speed[0] + set_speed[1]) / 2.0;
     const double steer = (set_speed[0] - speed) * 4.5;
-
-    // Print to terminal for debugging
-    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-    //             "%s Steer: %d, Speed: %d",prefix.c_str(), (int16_t)steer, (int16_t)speed);
 
     SerialCommand command;
     command.start = (uint16_t)START_FRAME;
@@ -530,10 +515,12 @@ namespace hoverboard_driver
     }
     return hardware_interface::return_type::OK;
   }
-
+  int countR, countL =0;
   void hoverboard_driver::on_encoder_update(const rclcpp::Time &time, int16_t right, int16_t left)
   {
     double posL = 0.0, posR = 0.0;
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //           "%s right: %d, left: %d ",prefix.c_str(),right,left);
 
     // Calculate wheel position in ticks, factoring in encoder wraps
     if (right < low_wrap && last_wheelcountR > high_wrap)
@@ -549,6 +536,9 @@ namespace hoverboard_driver
       multL--;
     posL = left + multL * (ENCODER_MAX - ENCODER_MIN);
     last_wheelcountL = left;
+
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //           "%s POSL: %f, POSR : %f , multR : %d, multL: %d ",prefix.c_str(),posL,posR,multR,multL);
 
     // When the board shuts down and restarts, wheel ticks are reset to zero so the robot can be suddently lost
     // This section accumulates ticks even if board shuts down and is restarted
@@ -582,11 +572,14 @@ namespace hoverboard_driver
     lastPubPosR += posRDiff;
     lastPosL = posL;
     lastPosR = posR;
-
+    countL+=lastPosL;
+    countR-=lastPosR;    
     // Convert position in accumulated ticks to position in radians
-    hw_positions_[left_wheel] = 2.0 * M_PI * lastPubPosL / (double)TICKS_PER_ROTATION;
-    hw_positions_[right_wheel] = 2.0 * M_PI * lastPubPosR / (double)TICKS_PER_ROTATION;
-
+    // hw_positions_[left_wheel] = 2.0 * M_PI * lastPubPosL / (double)TICKS_PER_ROTATION;
+    // hw_positions_[right_wheel] = 2.0 * M_PI * lastPubPosR / (double)TICKS_PER_ROTATION;  
+    hw_positions_[left_wheel] = 2.0 * M_PI * countL / (double)TICKS_PER_ROTATION;
+    hw_positions_[right_wheel] = 2.0 * M_PI * countR / (double)TICKS_PER_ROTATION;      
+    // std::cout << count << std::endl;
     hardware_publisher->publish_pos(left_wheel, hw_positions_[left_wheel]);
     hardware_publisher->publish_pos(right_wheel, hw_positions_[right_wheel]);
   }

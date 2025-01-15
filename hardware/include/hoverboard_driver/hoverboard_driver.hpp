@@ -40,6 +40,7 @@
 namespace hoverboard_driver
 {
 
+  int incnt=0;
   enum
   {
     /// @brief left wheel
