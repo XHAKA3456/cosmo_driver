@@ -163,7 +163,7 @@ namespace hoverboard_driver
     std::string port;
     std::string prefix;
     std::string l_wheel_name ;
-    std::string R_wheel_name ;
+    std::string r_wheel_name ;
 
     rclcpp::Time last_read;
     bool first_read_pass_;

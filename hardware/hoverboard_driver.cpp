@@ -207,8 +207,9 @@ namespace hoverboard_driver
     max_velocity = std::stod(info_.hardware_parameters["max_velocity"]);
     port = info_.hardware_parameters["device"];
     prefix= info_.hardware_parameters["prefix"];
-    l_wheel_name = info_.hardware_parameters[""];
-    R_wheel_name = info_.hardware_parameters[""];
+    l_wheel_name = info_.joints[0].name;
+    r_wheel_name = info_.joints[1].name;
+
     hw_positions_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_velocities_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
@@ -271,19 +272,17 @@ namespace hoverboard_driver
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     // RCLCPP_INFO(rclcpp::get_logger("HoverBoardSystemHardware"), " ---------------------------------- joints size %d ",info_.joints.size());
-    for (auto i = 0u; i < info_.joints.size(); i++)
-    {
-      state_interfaces.emplace_back(hardware_interface::StateInterface(
-          info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[left_wheel]));
-      state_interfaces.emplace_back(hardware_interface::StateInterface(
-          info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[right_wheel]));
 
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-          info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[left_wheel]));
-    // RCLCPP_INFO(rclcpp::get_logger("HoverBoardSystemHardware"), " ---------------------------------- joints size %c ",info_.joints[i].name);
+          l_wheel_name, hardware_interface::HW_IF_POSITION, &hw_positions_[left_wheel]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+          r_wheel_name, hardware_interface::HW_IF_POSITION, &hw_positions_[right_wheel]));
 
-    }
-
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+          l_wheel_name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[left_wheel]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+          r_wheel_name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[right_wheel]));          
+    // RCLCPP_INFO(rclcpp::get_logger("HoverBoardSystemHardware"), " ---------------------------------- joints name %s ",l_wheel_name.c_str());
     return state_interfaces;
   }
 
@@ -443,9 +442,15 @@ namespace hoverboard_driver
         // hardware_publisher->publish_voltage((double)msg.batVoltage / 100.0);
         hardware_publisher->publish_temp((double)msg.boardTemp / 10.0);
 
-        // Convert RPM to RAD/S
-        // hw_velocities_[left_wheel] = direction_correction * (abs(msg.speedL_meas) * 0.10472);
-        // hw_velocities_[right_wheel] = direction_correction * (abs(msg.speedR_meas) * 0.10472);
+        // // Convert RPM to RAD/S
+        // float wheelR_speed = (double)msg.wheelR_cnt/4500.0*90.0;
+        // float wheelL_speed = (double)msg.wheelL_cnt/4500.0*90.0;
+        // std::cout<<wheelL_speed<<"-------------------------\n";
+        // hw_velocities_[left_wheel] = direction_correction * (abs(wheelL_speed) * 0.10472);
+        // hw_velocities_[right_wheel] = direction_correction * (abs(wheelR_speed) * 0.10472);
+
+        hw_velocities_[left_wheel] = direction_correction * (abs(msg.wheelL_cnt)/4500 * 0.10472);
+        hw_velocities_[right_wheel] = direction_correction * (abs(msg.wheelR_cnt)/4500 * 0.10472);
         hardware_publisher->publish_vel(left_wheel, hw_velocities_[left_wheel]);
         hardware_publisher->publish_vel(right_wheel, hw_velocities_[right_wheel]);
 
@@ -502,7 +507,7 @@ namespace hoverboard_driver
 
     // Calculate steering from difference of left and right
     const double speed = (set_speed[0] + set_speed[1]) / 2.0;
-    const double steer = (set_speed[0] - speed) * 2;
+    const double steer = (set_speed[0] - speed) * 2.0;
 
     SerialCommand command;
     command.start = (uint16_t)START_FRAME;
@@ -579,11 +584,15 @@ namespace hoverboard_driver
     lastPubPosR += posRDiff;
     lastPosL = posL;
     lastPosR = posR;
+
+    countR -= lastPosR;
+    countL += lastPosL;
     // Convert position in accumulated ticks to position in radians
-    hw_positions_[left_wheel] = 2.0 * M_PI * lastPubPosL / (double)TICKS_PER_ROTATION;
-    hw_positions_[right_wheel] = 2.0 * M_PI * lastPubPosR / (double)TICKS_PER_ROTATION; 
-    // hw_positions_[left_wheel] =  2.0 * M_PI * countL / (double)TICKS_PER_ROTATION;
-    // hw_positions_[right_wheel] =  2.0 * M_PI * countR / (double)TICKS_PER_ROTATION;      
+    // hw_positions_[left_wheel] = 2.0 * M_PI * lastPubPosL / (double)TICKS_PER_ROTATION;
+    // hw_positions_[right_wheel] = 2.0 * M_PI * lastPubPosR / (double)TICKS_PER_ROTATION; 
+
+    hw_positions_[left_wheel] =  2.0 * M_PI * countL / (double)TICKS_PER_ROTATION;
+    hw_positions_[right_wheel] =  2.0 * M_PI * countR / (double)TICKS_PER_ROTATION;      
 
     // std::cout << count << std::endl;
     hardware_publisher->publish_pos(left_wheel, hw_positions_[left_wheel]);

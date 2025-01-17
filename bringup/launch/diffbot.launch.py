@@ -94,6 +94,8 @@ def generate_launch_description():
             ("~/robot_description", "/robot_description"),
             ("/rear_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
             ("/front_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Front에 맞게 토픽 매핑
+            ("/rear_hoverboard_base_controller/odom", "/wheel/odom"),  # Rear에 맞게 토픽 매핑
+            ("/front_hoverboard_base_controller/odom", "/wheel/odom"),  # Front에 맞게 토픽 매핑
         ],
         condition=IfCondition(remap_odometry_tf),
 
