@@ -162,6 +162,8 @@ namespace hoverboard_driver
     int direction_correction = 1;
     std::string port;
     std::string prefix;
+    std::string l_wheel_name ;
+    std::string R_wheel_name ;
 
     rclcpp::Time last_read;
     bool first_read_pass_;
