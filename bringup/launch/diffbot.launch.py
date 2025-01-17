@@ -82,6 +82,14 @@ def generate_launch_description():
             "hoverboard_controllers.yaml",
         ]
     )
+
+    ekf = PathJoinSubstitution(
+        [
+            FindPackageShare("hoverboard_driver"),
+            "config",
+            "ekf.yaml",
+        ]
+    )    
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("hoverboard_driver"), "config", "slam.rviz"]
     )
@@ -119,7 +127,7 @@ def generate_launch_description():
          executable='ekf_node',
          name='ekf_filter_node',
          output='screen',
-         parameters=['/home/uk/cosmo_ws/install/hoverboard_driver/share/hoverboard_driver/config/ekf.yaml']
+         parameters=[ekf]
     )
 
     joint_state_publisher = Node(
