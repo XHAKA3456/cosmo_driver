@@ -20,9 +20,12 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, 
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-
+import os
+import launch_ros
 
 def generate_launch_description():
+
+    pkg_share = launch_ros.substitutions.FindPackageShare(package='hoverboard_driver')
     # Declare arguments
     declared_arguments = []
     declared_arguments.append(
@@ -109,6 +112,14 @@ def generate_launch_description():
             ("~/robot_description", "/robot_description"),
         ],
         condition=UnlessCondition(remap_odometry_tf),
+    )
+
+    robot_localization_node = Node(
+         package='robot_localization',
+         executable='ekf_node',
+         name='ekf_filter_node',
+         output='screen',
+         parameters=['/home/uk/cosmo_ws/install/hoverboard_driver/share/hoverboard_driver/config/ekf.yaml']
     )
 
     joint_state_publisher = Node(
@@ -207,6 +218,7 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
         delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
+        robot_localization_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        
     ]
