@@ -38,7 +38,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "remap_odometry_tf",
-            default_value="false",
+            default_value="true",
             description="Remap odometry TF from the steering controller to the TF tree.",
         )
     )    
@@ -91,7 +91,7 @@ def generate_launch_description():
         ]
     )    
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("hoverboard_driver"), "config", "slam.rviz"]
+        [FindPackageShare("hoverboard_driver"), "config", "interface.rviz"]
     )
 
     control_node_remapped = Node(
@@ -105,8 +105,8 @@ def generate_launch_description():
             ("~/robot_description", "/robot_description"),
             ("/rear_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
             ("/front_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Front에 맞게 토픽 매핑
-            ("/rear_hoverboard_base_controller/odom", "/wheel/odom"),  # Rear에 맞게 토픽 매핑
-            ("/front_hoverboard_base_controller/odom", "/wheel/odom"),  # Front에 맞게 토픽 매핑
+            # ("/rear_hoverboard_base_controller/odom", "/wheel/odom"),  # Rear에 맞게 토픽 매핑
+            # ("/front_hoverboard_base_controller/odom", "/wheel/odom"),  # Front에 맞게 토픽 매핑
         ],
         condition=IfCondition(remap_odometry_tf),
 
