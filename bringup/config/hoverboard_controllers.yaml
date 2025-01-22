@@ -35,9 +35,11 @@ front_hoverboard_base_controller:
     publish_rate: 50.0
     odom_frame_id: odom
     base_frame_id: base_link
+    # pose_covariance_diagonal : [0.001, 0.001, 0.0, 0.0, 0.0, 10.0]
+    # twist_covariance_diagonal: [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
+
     pose_covariance_diagonal : [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-    
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.1]    
     positinon_feedback : true
     open_loop: false
     enable_odom_tf: false
@@ -85,9 +87,11 @@ rear_hoverboard_base_controller:
     publish_rate: 50.0
     odom_frame_id: odom
     base_frame_id: base_link
+    # pose_covariance_diagonal : [0.001, 0.001, 0.0, 0.0, 0.0, 10.0]
+    # twist_covariance_diagonal: [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
+
     pose_covariance_diagonal : [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
-    
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.1]    
     positinon_feedback : true
     open_loop: false
     enable_odom_tf: false

@@ -165,6 +165,8 @@ namespace hoverboard_driver
     std::string l_wheel_name ;
     std::string r_wheel_name ;
 
+    int countR, countL =0;
+    
     rclcpp::Time last_read;
     bool first_read_pass_;
     // Last known encoder values

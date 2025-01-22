@@ -258,7 +258,7 @@ namespace hoverboard_driver
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     // RCLCPP_INFO(rclcpp::get_logger("HoverBoardSystemHardware"), " ---------------------------------- joints size %d ",info_.joints.size());
-
+      
       state_interfaces.emplace_back(hardware_interface::StateInterface(
           l_wheel_name, hardware_interface::HW_IF_POSITION, &hw_positions_[left_wheel]));
       state_interfaces.emplace_back(hardware_interface::StateInterface(
@@ -360,8 +360,8 @@ namespace hoverboard_driver
     {
       unsigned char c;
       int i = 0, r = 0;
-      RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                  "%s connect read ",prefix.c_str());
+      // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+      //             "%s connect read ",prefix.c_str());
       while ((r = ::read(port_fd, &c, 1)) > 0 && i++ < 1024)
         protocol_recv(time, c);
       if (i > 0)
@@ -432,8 +432,8 @@ namespace hoverboard_driver
         // hw_velocities_[left_wheel] = direction_correction * (abs(wheelL_speed) * 0.10472);
         // hw_velocities_[right_wheel] = direction_correction * (abs(wheelR_speed) * 0.10472);
 
-        hw_velocities_[left_wheel] = direction_correction * (abs(msg.wheelL_cnt)/(double)TICKS_PER_ROTATION * 0.10472);
-        hw_velocities_[right_wheel] = direction_correction * (abs(msg.wheelR_cnt)/(double)TICKS_PER_ROTATION * 0.10472);
+        hw_velocities_[left_wheel] = direction_correction * (abs(msg.wheelL_cnt)/(double)TICKS_PER_LROTATION * 0.10472);
+        hw_velocities_[right_wheel] = direction_correction * (abs(msg.wheelR_cnt)/(double)TICKS_PER_RROTATION * 0.10472);
         hardware_publisher->publish_vel(left_wheel, hw_velocities_[left_wheel]);
         hardware_publisher->publish_vel(right_wheel, hw_velocities_[right_wheel]);
         // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),"L : %04x, R: %04x", hw_velocities_[left_wheel],hw_velocities_[right_wheel]);
@@ -496,8 +496,8 @@ namespace hoverboard_driver
     command.speed = (int16_t)speed;
     command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
 
-    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,command.speed);
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //             "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,command.speed);
 
 
     int rc = ::write(port_fd, (const void *)&command, sizeof(command));
@@ -507,10 +507,10 @@ namespace hoverboard_driver
     }
     return hardware_interface::return_type::OK;
   }
-  int countR, countL =0;
 
   void hoverboard_driver::on_encoder_update(const rclcpp::Time &time, int16_t right, int16_t left)
   {
+    // std::cout << right << left << "\n";
     double posL = 0.0, posR = 0.0;
     // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
     //           "%s right: %d, left: %d ",prefix.c_str(),right,left);
@@ -565,12 +565,16 @@ namespace hoverboard_driver
 
     countR -= lastPosR;
     countL += lastPosL;
+
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //               " %s __ countR : %d, countL : %d",prefix.c_str(),countR, countL);
+
     // Convert position in accumulated ticks to position in radians
     // hw_positions_[left_wheel] = 2.0 * M_PI * lastPubPosL / (double)TICKS_PER_ROTATION;
     // hw_positions_[right_wheel] = 2.0 * M_PI * lastPubPosR / (double)TICKS_PER_ROTATION; 
 
-    hw_positions_[left_wheel] =  2.0 * M_PI * countL / (double)TICKS_PER_ROTATION;
-    hw_positions_[right_wheel] =  2.0 * M_PI * countR / (double)TICKS_PER_ROTATION;      
+    hw_positions_[left_wheel] =  2.0 * M_PI * countL / (double)TICKS_PER_LROTATION;
+    hw_positions_[right_wheel] =  2.0 * M_PI * countR / (double)TICKS_PER_RROTATION;      
 
     // std::cout << count << std::endl;
     hardware_publisher->publish_pos(left_wheel, hw_positions_[left_wheel]);
