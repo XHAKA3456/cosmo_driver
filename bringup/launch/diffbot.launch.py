@@ -91,7 +91,7 @@ def generate_launch_description():
         ]
     )    
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("hoverboard_driver"), "config", "interface.rviz"]
+        [FindPackageShare("hoverboard_driver"), "config", "nav.rviz"]
     )
 
     control_node_remapped = Node(
@@ -127,7 +127,11 @@ def generate_launch_description():
          executable='ekf_node',
          name='ekf_filter_node',
          output='screen',
-         parameters=[ekf]
+         parameters=[ekf],
+        remappings=[
+            ("/odometry/filtered", "/odom"),
+        ],
+
     )
 
     joint_state_publisher = Node(

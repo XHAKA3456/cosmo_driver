@@ -1,6 +1,6 @@
-image: map.pgm
+image: /home/uk/cosmo_ws/src/hoverboard/map/map.png
 resolution: 0.046
-origin: [ 1400 , 700 , 0.000000]
+origin: [ -64.4 , -48.3 , 0.000000]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
