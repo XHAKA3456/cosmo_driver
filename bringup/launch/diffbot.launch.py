@@ -218,6 +218,15 @@ def generate_launch_description():
         )
     )
 
+    laser_node = Node(
+        package="pkg_lds01",
+        executable="lds01",
+        name="lds01_data",
+        output="screen",
+        parameters=[],
+
+    )
+
     nodes = [
         # rear_control_node,
         # front_control_node,
@@ -231,6 +240,7 @@ def generate_launch_description():
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
         delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
         robot_localization_node,
+        laser_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        
     ]

@@ -78,7 +78,7 @@ def generate_launch_description():
                     parameters=[nav2_yaml]
                 )
     start_amcl = TimerAction(
-        period=10.0,  
+        period=5.0,  
         actions=[
             amcl_node,
             RegisterEventHandler(

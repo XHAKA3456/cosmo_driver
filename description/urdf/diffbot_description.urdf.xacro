@@ -24,14 +24,14 @@
 
 
   <!-- Base Footprint Link-->
-  <link name="base_footprint">
-  </link>
+  <!-- <link name="base_footprint">
+  </link> -->
 
-  <joint name="base_footprint_joint" type = "fixed">
+  <!-- <joint name="base_footprint_joint" type = "fixed">
     <parent link="base_link"/>
     <child link="base_footprint"/>
     <origin xyz="0 0 0" rpy= "0 0 0"/>
-  </joint>
+  </joint> -->
 
   <!-- Chassis -->
 
@@ -107,7 +107,7 @@
     <joint name="${prefix}rear_right_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link"/>
       <child link="${prefix}rear_right_wheel"/>
-      <origin xyz="-${wheelbase/2} ${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="-${wheelbase/2} -${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -148,7 +148,7 @@
     <joint name="${prefix}rear_left_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link" />
       <child link="${prefix}rear_left_wheel" />
-      <origin xyz="-${wheelbase/2} -${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="-${wheelbase/2} ${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -193,7 +193,7 @@
     <joint name="${prefix}front_right_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link" />
       <child link="${prefix}front_right_wheel" />
-      <origin xyz="${wheelbase/2} ${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="${wheelbase/2} -${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -236,7 +236,7 @@
     <joint name="${prefix}front_left_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link" />
       <child link="${prefix}front_left_wheel" />
-      <origin xyz="${wheelbase/2} -${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="${wheelbase/2} ${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -306,7 +306,7 @@
     <joint name="${prefix}laser_joint" type="fixed">
       <parent link="${prefix}chassis_link"/>
       <child link="${prefix}laser"/>
-      <origin xyz="0 0 ${base_height/2 + lidar_height/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${base_height/2 + lidar_height/2}" rpy="${PI} 0 ${PI}"/>
     </joint>
 
     <!-- <xacro:include filename="lidar.xacro"/>
