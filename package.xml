@@ -35,6 +35,7 @@
   <exec_depend>control_toolbox</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>pkg_lds01</exec_depend>
+  <exec_depend>imu_receiver</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
 

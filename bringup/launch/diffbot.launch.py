@@ -140,17 +140,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    lidar_node = Node(
-        package="lds01",
-        executable="lds01",
-        output="screen",
-        # parameters=[],
-        # remappings=[
-        #     ("/example_input", "/remapped_input"),  # 토픽 매핑 (필요 시)
-        #     ("/example_output", "/remapped_output"),
-        # ],
-    )
-
     robot_state_pub_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -164,6 +153,24 @@ def generate_launch_description():
        output="log",
        arguments=["-d", rviz_config_file],
        condition=IfCondition(gui),
+    )
+
+    laser_node = Node(
+        package="pkg_lds01",
+        executable="lds01",
+        name="lds01_data",
+        output="screen",
+        parameters=[],
+
+    )
+
+    imu_node = Node(
+        package="imu_receiver",
+        executable="pub_imu",
+        name="imu_data",
+        output="screen",
+        parameters=[],
+
     )
 
     front_joint_state_broadcaster_spawner = Node(
@@ -218,14 +225,6 @@ def generate_launch_description():
         )
     )
 
-    laser_node = Node(
-        package="pkg_lds01",
-        executable="lds01",
-        name="lds01_data",
-        output="screen",
-        parameters=[],
-
-    )
 
     nodes = [
         # rear_control_node,
@@ -239,8 +238,9 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
         delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
-        # robot_localization_node,
+        robot_localization_node,
         laser_node,
+        imu_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        
     ]
