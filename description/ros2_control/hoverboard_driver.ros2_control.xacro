@@ -10,6 +10,7 @@
         <param name="wheel_radius">0.085</param>
         <param name="max_velocity">2.0</param>
         <param name="device">${device}</param>
+        <param name="wheel_base">0.32</param>
       </hardware>
       <joint name="${prefix}left_wheel_joint">
         <command_interface name="velocity"/>

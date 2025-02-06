@@ -191,6 +191,7 @@ namespace hoverboard_driver
     // read parameter from hoverboard_driver.ros2_control.xacro file
     wheel_radius = std::stod(info_.hardware_parameters["wheel_radius"]);
     max_velocity = std::stod(info_.hardware_parameters["max_velocity"]);
+    wheel_base = std::stod(info_.hardware_parameters["wheel_base"]);
     port = info_.hardware_parameters["device"];
     prefix= info_.hardware_parameters["prefix"];
     l_wheel_name = info_.joints[0].name;
@@ -488,7 +489,7 @@ namespace hoverboard_driver
 
     // Calculate steering from difference of left and right
     const double speed = (set_speed[0] + set_speed[1]) / 2.0;
-    const double steer = (set_speed[0] - speed) * 2.0;
+    const double steer = (set_speed[0] - set_speed[1]) / wheel_base;
 
     SerialCommand command;
     command.start = (uint16_t)START_FRAME;
