@@ -105,8 +105,8 @@ def generate_launch_description():
             ("~/robot_description", "/robot_description"),
             ("/rear_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Rear에 맞게 토픽 매핑
             ("/front_hoverboard_base_controller/cmd_vel_unstamped", "/cmd_vel"),  # Front에 맞게 토픽 매핑
-            # ("/rear_hoverboard_base_controller/odom", "/wheel/odom"),  # Rear에 맞게 토픽 매핑
-            # ("/front_hoverboard_base_controller/odom", "/wheel/odom"),  # Front에 맞게 토픽 매핑
+            # ("/rear_hoverboard_base_controller/odom", "/odom"),  # Rear에 맞게 토픽 매핑
+            # ("/front_hoverboard_base_controller/odom", "/odom"),  # Front에 맞게 토픽 매핑
         ],
         condition=IfCondition(remap_odometry_tf),
 
@@ -239,7 +239,7 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
         delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
-        robot_localization_node,
+        # robot_localization_node,
         laser_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        

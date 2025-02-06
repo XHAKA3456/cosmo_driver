@@ -23,7 +23,7 @@ from launch_ros.actions import Node
 
 from launch.actions import RegisterEventHandler, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
-from launch.event_handlers import OnProcessExit, OnProcessStart, OnExecutionComplete
+from launch.event_handlers import OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
 from launch_ros.substitutions import FindPackageShare
@@ -31,15 +31,11 @@ import launch_ros
 def generate_launch_description():
 
     diff_launch_dir = os.path.join(get_package_share_directory('hoverboard_driver'), 'launch', 'diffbot.launch.py')
-    map_file = os.path.join(get_package_share_directory('hoverboard_driver'), 'map', 'map.yaml')
+    # map_file = os.path.join(get_package_share_directory('hoverboard_driver'), 'map', 'room.yaml')
     nav2_yaml = os.path.join(get_package_share_directory('hoverboard_driver'), 'param', 'hover.yaml')
-    lifecycle_nodes = ['map_server', 
-                       'amcl',
-                    #    'planner_server',
-                    #    'controller_server',
-                    #    'recoveries_server',
-                    #    'bt_navigator'
-                       ]
+    # lifecycle_nodes = ['map_server', 
+    #                    'amcl',
+    #                    ]
 
     diff_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(diff_launch_dir)
@@ -51,7 +47,7 @@ def generate_launch_description():
                     executable='map_server',
                     name='map_server',
                     output='screen',
-                    parameters=[{'yaml_filename': map_file}]
+                    parameters=[nav2_yaml]
                 )
     map_server_lifecycle = RegisterEventHandler(
         OnProcessStart(
@@ -78,7 +74,7 @@ def generate_launch_description():
                     parameters=[nav2_yaml]
                 )
     start_amcl = TimerAction(
-        period=5.0,  
+        period=4.0,  
         actions=[
             amcl_node,
             RegisterEventHandler(
