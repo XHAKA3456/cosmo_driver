@@ -12,7 +12,7 @@
   <xacro:property name="wheelbase" value="0.320" />
   <xacro:property name="wheel_mass" value="1.0" /> <!-- arbitrary value for wheel mass -->
   <xacro:property name="wheel_len" value="0.060" />
-  <xacro:property name="wheel_seperate" value="0.520"/>
+  <xacro:property name="wheel_separation" value="0.520"/>
   <xacro:property name="wheel_radius" value="0.085" />
   <xacro:property name="lidar_height" value="0.05" />
   <xacro:property name="lidar_radius" value="0.03" />
@@ -107,7 +107,7 @@
     <joint name="${prefix}rear_right_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link"/>
       <child link="${prefix}rear_right_wheel"/>
-      <origin xyz="-${wheelbase/2} -${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="-${wheelbase/2} -${wheel_separation/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -148,7 +148,7 @@
     <joint name="${prefix}rear_left_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link" />
       <child link="${prefix}rear_left_wheel" />
-      <origin xyz="-${wheelbase/2} ${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="-${wheelbase/2} ${wheel_separation/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -193,7 +193,7 @@
     <joint name="${prefix}front_right_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link" />
       <child link="${prefix}front_right_wheel" />
-      <origin xyz="${wheelbase/2} -${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="${wheelbase/2} -${wheel_separation/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>
@@ -236,7 +236,7 @@
     <joint name="${prefix}front_left_wheel_joint" type="continuous">
       <parent link="${prefix}chassis_link" />
       <child link="${prefix}front_left_wheel" />
-      <origin xyz="${wheelbase/2} ${wheel_seperate/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
+      <origin xyz="${wheelbase/2} ${wheel_separation/2} -${base_height/2}" rpy="0 0 ${PI/2}"/>
       <axis xyz="1 0 0"/>
       <limit effort="100.0" velocity="1.0"/>
       <dynamics damping="0.2"/>

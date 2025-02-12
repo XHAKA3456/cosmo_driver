@@ -59,8 +59,8 @@ namespace hoverboard_driver
     std::string connected_pub_node_name = _prefix + "hoverboard/connected";
     connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
 
-    declare_parameter("f",0.2);
-    declare_parameter("p", 1.5);
+    declare_parameter("f", 0.0);
+    declare_parameter("p", 3.0);
     declare_parameter("i", 0.0);
     declare_parameter("d", 0.05);
     declare_parameter("i_clamp_min", -5.0);
@@ -191,7 +191,7 @@ namespace hoverboard_driver
     // read parameter from hoverboard_driver.ros2_control.xacro file
     wheel_radius = std::stod(info_.hardware_parameters["wheel_radius"]);
     max_velocity = std::stod(info_.hardware_parameters["max_velocity"]);
-    wheel_base = std::stod(info_.hardware_parameters["wheel_base"]);
+    wheel_separation = std::stod(info_.hardware_parameters["wheel_separation"]);
     port = info_.hardware_parameters["device"];
     prefix= info_.hardware_parameters["prefix"];
     l_wheel_name = info_.joints[0].name;
@@ -290,7 +290,7 @@ namespace hoverboard_driver
   {
 
     RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Using port %s", port.c_str());
-    std::cout << wheel_radius << std::endl; 
+    // std::cout << wheel_radius << std::endl; 
     // Convert m/s to rad/s
     max_velocity /= wheel_radius;
 
@@ -478,18 +478,46 @@ namespace hoverboard_driver
     pid_outputs[1] = pids[1](hw_velocities_[left_wheel], hw_commands_[right_wheel], period);
 
     // // Convert PID outputs in RAD/S to RPM
-    double set_speed[2] = {
-       pid_outputs[0] / 0.10472,
-       pid_outputs[1] / 0.10472};
+    // double set_speed[2] = {
+    //    pid_outputs[0] / 0.10472,
+    //    pid_outputs[1] / 0.10472};
+
+     double set_speed[2] = {
+           hw_commands_[left_wheel] / 0.10472,
+           hw_commands_[right_wheel] / 0.10472
+    };
 
     //  double set_speed[2] = {
-    //        hw_commands_[left_wheel] / 0.10472,
-    //        hw_commands_[right_wheel] / 0.10472
-    //  };
+    //   hw_commands_[left_wheel] * 5000 / (2 * 3.141592),
+    //   hw_commands_[right_wheel] * 5000 / (2 * 3.141592)
+    // };
 
     // Calculate steering from difference of left and right
-    const double speed = (set_speed[0] + set_speed[1]) / 2.0;
-    const double steer = (set_speed[0] - set_speed[1]) / wheel_base;
+    const double raw_speed = (set_speed[0] + set_speed[1]) / 2.0;
+    const double raw_steer = (set_speed[0] - set_speed[1]);
+
+    double speed = 0.0;
+    if(raw_speed >= 0){
+      speed = (raw_speed + 26.93)/0.5754;
+        if(speed < 47){
+          speed = 0;
+        }
+    }
+    else{
+      speed = (raw_speed - 26.93)/0.5754;
+    }
+
+    double steer = 0.0;
+    if(raw_steer >= 0){
+      steer = (raw_steer/2 + 23.22)/0.269;
+      if(steer < 87){
+        steer = 0;
+      }
+    }
+    else{
+      steer = (raw_steer/2 - 23.22)/0.269;
+    }
+
 
     SerialCommand command;
     command.start = (uint16_t)START_FRAME;
@@ -498,8 +526,10 @@ namespace hoverboard_driver
     command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
 
     // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-    //             "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,command.speed);
+    //             "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
 
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    // "%s , left: %.4f, right: %.4f", prefix.c_str(), hw_commands_[left_wheel], hw_commands_[right_wheel]);
 
     int rc = ::write(port_fd, (const void *)&command, sizeof(command));
     if (rc < 0)
