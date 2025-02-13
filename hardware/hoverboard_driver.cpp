@@ -60,7 +60,7 @@ namespace hoverboard_driver
     connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
 
     declare_parameter("f", 0.0);
-    declare_parameter("p", 1.5);
+    declare_parameter("p", 2.0);
     declare_parameter("i", 0.0);
     declare_parameter("d", 0.05);
     declare_parameter("i_clamp_min", -5.0);
@@ -510,13 +510,13 @@ namespace hoverboard_driver
 
     double steer = 0.0;
     if(raw_steer >= 0){
-      steer = (raw_steer/2 + 23.22)/0.269;
-      if(steer < 87){
+      steer = raw_steer/0.98 + 140;
+      if(steer < 141){
         steer = 0;
       }
     }
     else{
-      steer = (raw_steer/2 - 23.22)/0.269;
+      steer = raw_steer/0.98 - 140;
     }
 
 
