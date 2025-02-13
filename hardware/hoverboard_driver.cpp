@@ -60,7 +60,7 @@ namespace hoverboard_driver
     connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
 
     declare_parameter("f", 0.0);
-    declare_parameter("p", 3.0);
+    declare_parameter("p", 1.5);
     declare_parameter("i", 0.0);
     declare_parameter("d", 0.05);
     declare_parameter("i_clamp_min", -5.0);
@@ -478,15 +478,16 @@ namespace hoverboard_driver
     pid_outputs[1] = pids[1](hw_velocities_[left_wheel], hw_commands_[right_wheel], period);
 
     // // Convert PID outputs in RAD/S to RPM
-    // double set_speed[2] = {
-    //    pid_outputs[0] / 0.10472,
-    //    pid_outputs[1] / 0.10472};
+    double PID_speed[2] = {
+       pid_outputs[0] / 0.10472,
+       pid_outputs[1] / 0.10472};
 
      double set_speed[2] = {
            hw_commands_[left_wheel] / 0.10472,
            hw_commands_[right_wheel] / 0.10472
     };
 
+    // drive the motors with the encoder values, encoder values per second
     //  double set_speed[2] = {
     //   hw_commands_[left_wheel] * 5000 / (2 * 3.141592),
     //   hw_commands_[right_wheel] * 5000 / (2 * 3.141592)
@@ -494,7 +495,7 @@ namespace hoverboard_driver
 
     // Calculate steering from difference of left and right
     const double raw_speed = (set_speed[0] + set_speed[1]) / 2.0;
-    const double raw_steer = (set_speed[0] - set_speed[1]);
+    const double raw_steer = (PID_speed[0] - PID_speed[1]);
 
     double speed = 0.0;
     if(raw_speed >= 0){
@@ -525,8 +526,8 @@ namespace hoverboard_driver
     command.speed = (int16_t)speed;
     command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
 
-    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-    //             "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
+    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+                "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
 
     // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
     // "%s , left: %.4f, right: %.4f", prefix.c_str(), hw_commands_[left_wheel], hw_commands_[right_wheel]);
