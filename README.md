@@ -1,4 +1,4 @@
-# ROS2_CONTROL for Hoverboard Driver based on DiffBot
+# ROS2_CONTROL and Navigation for Hoverboard Driver based on DiffBot
 This is a ros2_control hardware interface implementation for Hoverboard Driver based on ros2_control DiffBot example.
 
 Find the documentation in [doc/userdoc.rst](doc/userdoc.rst) or on [control.ros.org](https://control.ros.org/master/doc/ros2_control_demos/example_2/doc/userdoc.html).
@@ -48,7 +48,7 @@ To activate, change this code section in hoverboard_driver.cpp
            hw_commands_[left_wheel] / 0.10472,
            hw_commands_[right_wheel] / 0.10472
      };
-     ```
+```
 
 # TODO
 - add serial port as argument to launch file
@@ -56,3 +56,15 @@ To activate, change this code section in hoverboard_driver.cpp
 - mapping /cmd_vel to hoverboard_driver_base/cmd_vel_unstamped not working now
 - split hoverboard_driver.cpp classes into separate files
 - clean up name mixup between hoverboard and diffbot to be more clear
+
+
+## build ros2 control in your workspace 
+```
+https://control.ros.org/rolling/doc/getting_started/getting_started.html#installation
+```
+
+## install pkg before using this rep
+```
+sudo apt install ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-slam-toolbox	
+
+```
