@@ -1,3 +1,16 @@
+// 최초 1 회
+// sudo apt update
+// sudo apt install g++
+
+// 컴파일 방법
+// g++ -o hoverboard_serial hoverboard_serial.cpp
+
+
+// 실행방법
+// 파일이 있는 디렉토리에 들어간 뒤
+// ./hoverboard_serial
+
+
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
@@ -6,7 +19,7 @@
 #include <thread>
 #include <atomic>
 
-// 데이터 읽을 때 여기서부터 읽어라
+// 데이터 읽을 때 여기서부터 읽으라는 기준
 #define START_FRAME 0xABCD
 
 // 프로토콜 ( 수신 )
