@@ -526,8 +526,8 @@ namespace hoverboard_driver
     command.speed = (int16_t)speed;
     command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
 
-    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-                "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+    //             "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
 
     // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
     // "%s , left: %.4f, right: %.4f", prefix.c_str(), hw_commands_[left_wheel], hw_commands_[right_wheel]);
