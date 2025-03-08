@@ -11,6 +11,9 @@ ekf_filter_node:
 # environment and want to ignore the effect of small variations in the ground plane that might otherwise be detected
 # by, for example, an IMU. Defaults to false if unspecified.
         two_d_mode: true
+        odom0_differential: true
+        odom1_differential: true
+
 
 # Whether to publish the acceleration state. Defaults to false if unspecified.
         publish_acceleration: true
@@ -55,17 +58,18 @@ ekf_filter_node:
 
         odom0: rear_hoverboard_base_controller/odom
         odom0_config: [false, false, false,
-                       false, false, false,
-                       true, true, false,
-                       false, false, false,
-                       false, false, false]
+                false, false, false,
+                true, true, false,
+                false, false, true,
+                false, false, false]
 
         odom1: front_hoverboard_base_controller/odom
         odom1_config: [false, false, false,
-                       false, false, false,
-                       true, true, false,
-                       false, false, false,
-                       false, false, false]
+                false, false, false,
+                true, true, false,
+                false, false, true,
+                false, false, false]
+
 
         imu0: imu_data
         imu0_config: [false, false, false,
