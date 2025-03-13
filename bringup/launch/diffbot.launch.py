@@ -30,6 +30,7 @@ def generate_launch_description():
 
     ydlidar_launch_dir = os.path.join(get_package_share_directory('ydlidar_ros2_driver'), 'launch', 'ydlidar_launch.py')
     pkg_share = launch_ros.substitutions.FindPackageShare(package='hoverboard_driver')
+
     # Declare arguments
     declared_arguments = []
     declared_arguments.append(
@@ -46,26 +47,10 @@ def generate_launch_description():
             description="Remap odometry TF from the steering controller to the TF tree.",
         )
     )    
-    # declared_arguments.append(
-    #     DeclareLaunchArgument(
-    #         "front_port",
-    #         default_value="/dev/ttyV0",
-    #         description="The serial port to use for the front hoverboard",
-    #     )
-    # )
-    # declared_arguments.append(
-    #     DeclareLaunchArgument(
-    #         "rear_port",
-    #         default_value="/dev/ttyV1",
-    #         description="The serial port to use for the rear hoverboard",
-    #     )
-    # )
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
     remap_odometry_tf = LaunchConfiguration("remap_odometry_tf")
-    # front_port = LaunchConfiguration("front_port")
-    # rear_port = LaunchConfiguration("rear_port")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -80,22 +65,16 @@ def generate_launch_description():
     robot_description = {"robot_description": robot_description_content}
 
     robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare("hoverboard_driver"),
-            "config",
-            "hoverboard_controllers.yaml",
-        ]
+        [FindPackageShare("hoverboard_driver"), "config", "hoverboard_controllers.yaml"]
     )
-
     ekf = PathJoinSubstitution(
-        [
-            FindPackageShare("hoverboard_driver"),
-            "config",
-            "ekf.yaml",
-        ]
+        [FindPackageShare("hoverboard_driver"), "config", "ekf.yaml"]
     )    
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("hoverboard_driver"), "config", "nav.rviz"]
+    )
+    twist_mux_config = PathJoinSubstitution(
+        [FindPackageShare("hoverboard_driver"), "config", "twist_mux.yaml"]
     )
 
     control_node_remapped = Node(
@@ -113,8 +92,8 @@ def generate_launch_description():
             # ("/front_hoverboard_base_controller/odom", "/odom"),  # Front에 맞게 토픽 매핑
         ],
         condition=IfCondition(remap_odometry_tf),
-
     )
+
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -135,7 +114,6 @@ def generate_launch_description():
         remappings=[
             ("/odometry/filtered", "/odom"),
         ],
-
     )
 
     joint_state_publisher = Node(
@@ -150,6 +128,7 @@ def generate_launch_description():
         output="both",
         parameters=[robot_description],
     )
+
     rviz_node = Node(
        package="rviz2",
        executable="rviz2",
@@ -163,14 +142,15 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(ydlidar_launch_dir)
     )
 
-    # laser_node = Node(
-    #     package="pkg_lds01",
-    #     executable="lds01",
-    #     name="lds01_data",
-    #     output="screen",
-    #     parameters=[],
-
-    # )
+    twist_mux_node = Node(
+        package="twist_mux",
+        executable="twist_mux",
+        name="twist_mux",
+        output="screen",
+        parameters=[twist_mux_config],
+        remappings=[
+            ("/cmd_vel_out", "/cmd_vel")],
+    )
 
     imu_node = Node(
         package="imu_receiver",
@@ -178,7 +158,14 @@ def generate_launch_description():
         name="imu_data",
         output="screen",
         parameters=[],
+    )
 
+    joy_node = Node(
+        package="xbox_joy",
+        executable="joystick_teleop",
+        name="joystick_teleop_node",
+        output="screen",
+        parameters=[],
     )
 
     front_joint_state_broadcaster_spawner = Node(
@@ -249,6 +236,8 @@ def generate_launch_description():
         robot_localization_node,
         ydlidar_launch,
         imu_node,
+        joy_node,
+        twist_mux_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        
     ]
