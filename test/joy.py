@@ -29,8 +29,8 @@ class JoystickTeleop(Node):
         self.angular_axis_index = 0  # 왼쪽 스틱 좌우 (기본적으로 axes[0])
 
         # 속도 스케일
-        self.linear_scale = 0.5
-        self.angular_scale = 2.3
+        self.linear_scale = 0.2
+        self.angular_scale = 0.3
 
         self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
         self.publish_vel = False

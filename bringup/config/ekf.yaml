@@ -60,14 +60,14 @@ ekf_filter_node:
         odom0_config: [false, false, false,
                 false, false, false,
                 true, true, false,
-                false, false, true,
+                false, false, false,
                 false, false, false]
 
         odom1: front_hoverboard_base_controller/odom
         odom1_config: [false, false, false,
                 false, false, false,
                 true, true, false,
-                false, false, true,
+                false, false, false,
                 false, false, false]
 
 

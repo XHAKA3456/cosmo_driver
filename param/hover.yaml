@@ -1,7 +1,7 @@
 map_server:
   ros__parameters:
     use_sim_time: False
-    yaml_filename: "/home/uk/cosmo_ws/src/hoverboard_driver/map/all1.yaml"
+    yaml_filename: "/home/uk/cosmo_ws/src/hoverboard_driver/map/whitetest.yaml"
     topic_name: "/map"
     frame_id: "map"
 
