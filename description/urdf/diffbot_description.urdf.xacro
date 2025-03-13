@@ -285,7 +285,7 @@
     </gazebo>
 
     <!-- LiDAR Sensor -->
-    <link name="${prefix}laser">
+    <link name="${prefix}laser_frame">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
@@ -305,8 +305,8 @@
 
     <joint name="${prefix}laser_joint" type="fixed">
       <parent link="${prefix}chassis_link"/>
-      <child link="${prefix}laser"/>
-      <origin xyz="0 0 ${base_height/2 + lidar_height/2}" rpy="${PI} 0 ${PI}"/>
+      <child link="${prefix}laser_frame"/>
+      <origin xyz="0 0 ${base_height/2 + lidar_height/2}" rpy="0 0 0"/>
     </joint>
 
     <!-- <xacro:include filename="lidar.xacro"/>

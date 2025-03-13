@@ -17,14 +17,18 @@ from launch.actions import DeclareLaunchArgument, RegisterEventHandler, TimerAct
 from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 import os
 import launch_ros
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
 
+    ydlidar_launch_dir = os.path.join(get_package_share_directory('ydlidar_ros2_driver'), 'launch', 'ydlidar_launch.py')
     pkg_share = launch_ros.substitutions.FindPackageShare(package='hoverboard_driver')
     # Declare arguments
     declared_arguments = []
@@ -155,14 +159,18 @@ def generate_launch_description():
        condition=IfCondition(gui),
     )
 
-    laser_node = Node(
-        package="pkg_lds01",
-        executable="lds01",
-        name="lds01_data",
-        output="screen",
-        parameters=[],
-
+    ydlidar_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(ydlidar_launch_dir)
     )
+
+    # laser_node = Node(
+    #     package="pkg_lds01",
+    #     executable="lds01",
+    #     name="lds01_data",
+    #     output="screen",
+    #     parameters=[],
+
+    # )
 
     imu_node = Node(
         package="imu_receiver",
@@ -239,7 +247,7 @@ def generate_launch_description():
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
         delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
         robot_localization_node,
-        laser_node,
+        ydlidar_launch,
         imu_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        

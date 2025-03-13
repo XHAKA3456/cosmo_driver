@@ -499,24 +499,24 @@ namespace hoverboard_driver
 
     double speed = 0.0;
     if(raw_speed >= 0){
-      speed = (raw_speed + 26.93)/0.5754;
-        if(speed < 47){
-          speed = 0;
-        }
+      speed = raw_speed / 0.9367 + 55;
+      if(speed < 56){
+        speed = 0;
+      }
     }
     else{
-      speed = (raw_speed - 26.93)/0.5754;
-    }
+      speed = raw_speed / 0.9367 - 55;
+    }    
 
     double steer = 0.0;
     if(raw_steer >= 0){
-      steer = raw_steer/0.98 + 140;
-      if(steer < 141){
+      steer = raw_steer/0.8 + 192;
+      if(steer < 193){
         steer = 0;
       }
     }
     else{
-      steer = raw_steer/0.98 - 140;
+      steer = raw_steer/0.8 - 192;
     }
 
 
@@ -526,8 +526,8 @@ namespace hoverboard_driver
     command.speed = (int16_t)speed;
     command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
 
-    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
-    //             "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
+    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
+                "%s , Start: 0x%X, Steer: %d, Speed: %d",prefix.c_str(), (int16_t)command.start, (int16_t)command.steer,(int16_t)command.speed);
 
     // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"),
     // "%s , left: %.4f, right: %.4f", prefix.c_str(), hw_commands_[left_wheel], hw_commands_[right_wheel]);
