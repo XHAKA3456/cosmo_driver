@@ -59,6 +59,9 @@ namespace hoverboard_driver
     std::string connected_pub_node_name = _prefix + "hoverboard/connected";
     connected_pub = this->create_publisher<std_msgs::msg::Bool>(connected_pub_node_name, 3);
 
+    // std::string status_pub_node_name = _prefix + "hoverboard/status";
+    // status_publisher_ = this->create_publisher<std_msgs::msg::String>(status_pub_node_name, 10);
+    
     declare_parameter("f", 0.0);
     declare_parameter("p", 2.0);
     declare_parameter("i", 0.0);
@@ -285,12 +288,52 @@ namespace hoverboard_driver
     return command_interfaces;
   }
 
-  hardware_interface::CallbackReturn hoverboard_driver::on_activate(
-      const rclcpp_lifecycle::State & /*previous_state*/)
-  {
+  /******** 나중에 컨트롤러 상태 파악하려면 사용 ********/ 
+  // std::string on_status()
+  // {
+  //     std::string controller_name = prefix + "hoverboard_driver";
+  //     std::string check_command = "ros2 control list_controllers | grep " + controller_name;
 
+  //     FILE *pipe = popen(check_command.c_str(), "r");
+  //     if (!pipe)
+  //     {
+  //         RCLCPP_ERROR(rclcpp::get_logger("hoverboard_driver"), "Failed to check %s status!", controller_name.c_str());
+  //         return "unknown";
+  //     }
+
+  //     char buffer[128];
+  //     std::string controller_status = "";
+  //     while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+  //     {
+  //         controller_status += buffer;
+  //     }
+  //     pclose(pipe);
+
+  //     if (controller_status.find("active") != std::string::npos)
+  //     {
+  //         controller_status_ = "active";
+  //     }
+  //     else if (controller_status.find("inactive") != std::string::npos)
+  //     {
+  //         controller_status_ = "inactive";
+  //     }
+  //     else
+  //     {
+  //         controller_status_ = "unknown";
+  //     }
+
+  //     std_msgs::msg::String msg;
+  //     msg.data = controller_status_;
+  //     status_publisher_->publish(msg);
+
+  //     return controller_status_;
+  // }
+
+  hardware_interface::CallbackReturn hoverboard_driver::on_activate(
+    const rclcpp_lifecycle::State & /*previous_state*/)
+  {
     RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Using port %s", port.c_str());
-    // std::cout << wheel_radius << std::endl; 
+
     // Convert m/s to rad/s
     max_velocity /= wheel_radius;
 
@@ -301,7 +344,7 @@ namespace hoverboard_driver
 
     first_read_pass_ = true;
 
-    //  Init PID controller
+    // Init PID controller
     pids[0].init(hardware_publisher->pid_config.f, hardware_publisher->pid_config.p,
                  hardware_publisher->pid_config.i, hardware_publisher->pid_config.d,
                  hardware_publisher->pid_config.i_clamp_max, hardware_publisher->pid_config.i_clamp_min,
@@ -315,12 +358,25 @@ namespace hoverboard_driver
 
     if ((port_fd = open(port.c_str(), O_RDWR | O_NOCTTY | O_NDELAY)) < 0)
     {
-      RCLCPP_FATAL(rclcpp::get_logger("hoverboard_driver"), "Cannot open serial port to hoverboard");
-      exit(-1);
-    }
+        RCLCPP_FATAL(rclcpp::get_logger("hoverboard_driver"), "Cannot open serial port to hoverboard");
+        exit(-1);
+    }    
+    // // Check and open the serial port
+    // if (port_fd >= 0)
+    // {
+    //     RCLCPP_WARN(rclcpp::get_logger("hoverboard_driver"), "Port is already open. Skipping re-opening.");
+    // }
+    // else
+    // {
+    //     if ((port_fd = open(port.c_str(), O_RDWR | O_NOCTTY | O_NDELAY)) < 0)
+    //     {
+    //         RCLCPP_FATAL(rclcpp::get_logger("hoverboard_driver"), "Cannot open serial port to hoverboard");
+    //         exit(-1);
+    //     }
+    //     RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Port opened successfully.");
+    // }
 
     // CONFIGURE THE UART -- connecting to the board
-    // The flags (defined in /usr/include/termios.h - see http://pubs.opengroup.org/onlinepubs/007908799/xsh/termios.h.html):
     struct termios options;
     tcgetattr(port_fd, &options);
     options.c_cflag = B38400 | CS8 | CLOCAL | CREAD; //<Set baud rate
@@ -330,18 +386,37 @@ namespace hoverboard_driver
     tcflush(port_fd, TCIFLUSH);
     tcsetattr(port_fd, TCSANOW, &options);
 
-    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Successfully activated!");
-
+    // std::string current_status = on_status();
+    // RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Current controller status: %s", current_status.c_str());
     return hardware_interface::CallbackReturn::SUCCESS;
   }
 
   hardware_interface::CallbackReturn hoverboard_driver::on_deactivate(
-      const rclcpp_lifecycle::State & /*previous_state*/)
+    const rclcpp_lifecycle::State & /*previous_state*/)
   {
-    if (port_fd != -1)
-      close(port_fd);
+    RCLCPP_WARN(rclcpp::get_logger("hoverboard_driver"), "Deactivating hoverboard_driver - Stopping motors");
+  
+    // publish 0 velocity to the sytem
+    hw_commands_[left_wheel] = 0.0;
+    hw_commands_[right_wheel] = 0.0;
+    hardware_publisher->publish_cmd(left_wheel, 0.0);
+    hardware_publisher->publish_cmd(right_wheel, 0.0);
 
-    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Successfully deactivated!");
+    // send 0 to the hoverboard using the serial port
+    SerialCommand command;
+    command.start = (uint16_t)START_FRAME;
+    command.steer = 0;
+    command.speed = 0;
+    command.checksum = (uint16_t)(command.start ^ command.steer ^ command.speed);
+
+    int rc = ::write(port_fd, (const void *)&command, sizeof(command));
+    if (rc < 0)
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("hoverboard_driver"), "Error writing stop command to hoverboard");
+    }
+
+    RCLCPP_WARN(rclcpp::get_logger("hoverboard_driver"), "cmd_vel is now ignored");
+    RCLCPP_INFO(rclcpp::get_logger("hoverboard_driver"), "Successfully deactivated and stopped motors");
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }

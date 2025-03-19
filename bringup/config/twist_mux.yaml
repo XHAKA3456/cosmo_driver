@@ -4,16 +4,34 @@ twist_mux:
       navigation:
         topic   : cmd_vel_nav
         timeout : 0.5
-        priority: 10
+        priority: 50
       joystick:
         topic   : cmd_vel_joy
         timeout : 0.5
-        priority: 80
+        priority: 70
       arucomaker:
         topic   : cmd_vel_aruco
         timeout : 0.5
-        priority: 50
+        priority: 20
       saftey:
         topic   : cmd_vel_safe
-        timeout : 0.5
+        timeout : 3.0
+        priority: 90
+
+    locks:
+      joystick:
+        topic   : joy_priority
+        timeout : 0.0
+        priority: 100
+      navigation:
+        topic   : nav_priority
+        timeout : 0.0
+        priority: 100
+      arucomaker:
+        topic   : aruco_priority
+        timeout : 0.0
+        priority: 100
+      saftey:
+        topic   : safe_priority
+        timeout : 0.0
         priority: 100

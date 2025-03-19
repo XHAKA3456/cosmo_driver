@@ -36,6 +36,7 @@
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
+#include "std_msgs/msg/string.hpp"
 
 namespace hoverboard_driver
 {
@@ -116,6 +117,7 @@ namespace hoverboard_driver
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr curr_pub[2];
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr temp_pub;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr connected_pub;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_publisher_;
 
         // Parameter Callback handle
     OnSetParametersCallbackHandle::SharedPtr callback_handle_;
@@ -153,6 +155,8 @@ namespace hoverboard_driver
     std::vector<double> hw_commands_;
     std::vector<double> hw_positions_;
     std::vector<double> hw_velocities_;
+
+    std::string controller_status_;
 
     void protocol_recv(const rclcpp::Time &time, char c);
     void on_encoder_update(const rclcpp::Time &time, int16_t right, int16_t left);
