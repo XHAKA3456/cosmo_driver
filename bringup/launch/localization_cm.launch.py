@@ -31,24 +31,30 @@ import launch_ros
 def generate_launch_description():
 
     diff_launch_dir = os.path.join(get_package_share_directory('hoverboard_driver'), 'launch', 'diffbot.launch.py')
-    # map_file = os.path.join(get_package_share_directory('hoverboard_driver'), 'map', 'room.yaml')
     nav2_yaml = os.path.join(get_package_share_directory('hoverboard_driver'), 'param', 'hover.yaml')
-    # lifecycle_nodes = ['map_server', 
-    #                    'amcl',
-    #                    ]
+
+    declare_map_arg = DeclareLaunchArgument(
+        'map_yaml_file',
+        default_value=PathJoinSubstitution([
+            FindPackageShare('hoverboard_driver'),
+            'map', 'whitetest.yaml'
+        ]),
+        description='Map YAML file path (used by nav2_map_server)'
+    )
+
+    map_file = LaunchConfiguration('map_yaml_file')
 
     diff_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(diff_launch_dir)
     )
-
 
     start_map_server = Node(
                     package='nav2_map_server',
                     executable='map_server',
                     name='map_server',
                     output='screen',
-                    parameters=[nav2_yaml]
-                )
+                    parameters=[nav2_yaml, {'yaml_filename': map_file}])
+    
     map_server_lifecycle = RegisterEventHandler(
         OnProcessStart(
             target_action=start_map_server,
@@ -168,6 +174,7 @@ def generate_launch_description():
     # )
 
     return LaunchDescription([
+        declare_map_arg,
         diff_launch,
         start_map_server,
         map_server_lifecycle,
