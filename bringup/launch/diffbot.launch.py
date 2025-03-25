@@ -142,14 +142,19 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(ydlidar_launch_dir)
     )
 
-    twist_mux_node = Node(
-        package="twist_mux",
-        executable="twist_mux",
-        name="twist_mux",
+    emo_stop_node = Node(
+        package="emo_stop",
+        executable="emo_stop_node",
+        name="emo_stop",
         output="screen",
-        parameters=[twist_mux_config],
-        remappings=[
-            ("/cmd_vel_out", "/cmd_vel")],
+        parameters=[],        
+    )
+
+    twist_mux_node = Node(
+        package="twist_mux_dynamic",
+        executable="twist_mux_dynamic",
+        name="twist_mux_dynamic",
+        output="screen",
     )
 
     imu_node = Node(
@@ -230,14 +235,15 @@ def generate_launch_description():
         robot_state_pub_node,
         front_joint_state_broadcaster_spawner,
         rear_joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
+        # delay_rviz_after_joint_state_broadcaster_spawner,
         delay_front_controller_spawner_after_joint_state_broadcaster_spawner,
         delay_rear_controller_spawner_after_joint_state_broadcaster_spawner,
         robot_localization_node,
         ydlidar_launch,
         imu_node,
-        joy_node,
+        # joy_node,
         twist_mux_node,
+        emo_stop_node,
         # delay_joint_state_publisher_after_all_nodes,
         # lidar_node        
     ]
